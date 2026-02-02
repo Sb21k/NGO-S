@@ -83,6 +83,7 @@ const NgoDashboard = () => {
   const userDetail = JSON.parse(userData)
 
   const [reqCount, setCounts] = useState({active:0,pending:0});
+  const uid = userDetail.userId;
   useEffect(()=>{
     Promise.all([
       fetch("http://localhost:8083/api/ngo/getActive").then(res=>res.json()),
@@ -96,9 +97,24 @@ const NgoDashboard = () => {
     })   
       .catch(err=>console.log("No requests found"))
   },[]);
+  const [impactCount, setImpact] = useState({impact:0});
+  useEffect(()=>{
+      fetch(`http://localhost:8083/api/req/getimpact/${uid}`)
+      .then(res=>{
+        if(!res.ok){
+          throw new Error("bad request");
+        }
+        return res.json();
+      })
+    .then(count=>{
+      setImpact({impact:count});
+    })
+    .catch(err=> console.log("No impact yet"))
+    setImpact({impact:0});
+  },[uid]);
+  
 
   const[fundRecd, setFunds] = useState({currentFund:0, totalFunds:0});
-  const uid = userDetail.userId;
   useEffect(()=>{
     Promise.all([
       fetch(`http://localhost:8083/api/ngof/getcurrent/${uid}`).then(res=>res.json()),
@@ -155,7 +171,7 @@ const formatCurrency = (amount) =>{
         </div>
         <div style={styles.statCard}>
           <p style={styles.subtitle}>Total beneficiaries helped</p>
-          <h2 style={{ fontSize: "28px", margin: "8px 0" }}></h2>
+          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>{impactCount.impact}</h2>
           <FaUsers style={{ ...styles.iconBase, color: "#16a34a", background: "#dcfce7" }} />
         </div>
         <div style={styles.statCard}>
