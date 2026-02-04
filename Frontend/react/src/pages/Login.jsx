@@ -13,7 +13,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  
+  // Load "Remember Me" email on startup
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     if (savedEmail) {
@@ -40,10 +40,9 @@ const Login = () => {
     if(!validateEmail(email)){
       return;
     }
-    setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5096/api/Auth/login", {
+      const response = await fetch("http://localhost:8080/Auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
