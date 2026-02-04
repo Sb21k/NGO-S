@@ -10,26 +10,26 @@ export default function FetchRequest() {
     // for individual view details button
     const [selectedReq, setReq] = useState();
     //const UpdateReq = ({ benefId }) => 
-
+    const userData = localStorage.getItem("user");
+    const userDetail = JSON.parse(userData);    
+    
     const changeStatus = async (newStatus) => {
         if(!selectedReq)
             return;
         console.log(selectedReq)
         const msg = newStatus === "APPROVED" ? "Approve":"Reject";
-        // if(!window.confirm(`Are you sure, you want to ${newStatus}? this request`))    
-        //     return;
         if(newStatus === "APPROVED")
         {
             if(!window.confirm(`Are you sure, you want to Approve? this request`))
                 return;
         }
         else if(newStatus==="REJECTED"){
-            if(!window.confirm("Are you suree want to Reject this request?"))
+            if(!window.confirm("Are you sure want to Reject this request?"))
                 return;
 
         }
         try {
-                const response = await fetch(`http://localhost:8083/api/ngo/update/${selectedReq.request_id}/${newStatus}`, {
+                const response = await fetch(`http://localhost:8080/ngo/update/${selectedReq.request_id}/${newStatus}/${userDetail.userId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: newStatus })
@@ -51,7 +51,7 @@ export default function FetchRequest() {
     useEffect(() => {
         if (!statusFilter)
             return;
-        fetch(`http://localhost:8083/api/ngo/getAll/${statusFilter}`)
+        fetch(`http://localhost:8080/ngo/getAll/${statusFilter}`)
             .then(resp => {
                 if (resp.ok)
                     return resp.json();
@@ -100,7 +100,7 @@ export default function FetchRequest() {
                                     </td>
                                     <td>{new Date(req.request_date).toLocaleDateString()}</td>
                                     <td>
-                                        <span className={`badge ${req.request_status === 'ACTIVE' ? 'bg-success' : 'bg-warning text-dark'}`}>
+                                        <span className={`badge ${req.request_status === 'APPROVED' ? 'bg-success' : 'bg-warning text-dark'}`}>
                                             {req.request_status}
                                         </span>
                                     </td>
@@ -123,25 +123,26 @@ export default function FetchRequest() {
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
+                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Request details</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div>
                                 <>
                                     <p>Date raised: <b>{selectedReq?.request_date}</b></p>
+                                    <p>Required Before: <strong>{selectedReq?.expire_date}</strong></p>
                                     <p><strong>Description:</strong> {selectedReq?.description}</p>
                                     <p><strong>Requested By:</strong> {selectedReq?.user?.username}</p>
                                     <p><strong>Contact Details:</strong> <a href={"mailto:" + selectedReq?.user?.email}>{selectedReq?.user?.email}</a></p>
                                     <p><strong>Phone:</strong> {selectedReq?.user?.phone_no}</p>
                                     <p><strong>Address:</strong> {selectedReq?.user?.address}</p>
-                                    <button type="button" className="btn btn-primary" onClick={() => window.open(`http://localhost:8083/uploads/${selectedReq?.proof_document}`, '_blank')}>View Supporting Document</button>
+                                    <button type="button" className="btn btn-primary" onClick={() => window.open(`http://localhost:8080/ngo/uploads/${selectedReq?.proof_document}`, '_blank')}>View Supporting Document</button>
                                 </>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-danger" onClick={() => changeStatus("REJECTED")}>Reject</button>
-                            <button type="button" class="btn btn-success" onClick={()=>changeStatus("APPROVED")}>Approve</button>
+                            <button type="button" class="btn btn-danger" onClick={() => changeStatus("REJECTED")}disabled={selectedReq?.request_status==="APPROVED" || selectedReq?.request_status==="REJECTED"}>Reject</button>
+                            <button type="button" class="btn btn-success" onClick={()=>changeStatus("APPROVED")}disabled={selectedReq?.request_status!=="PENDING"}>Approve & Bind</button>
                         </div>
                     </div>
                 </div>
