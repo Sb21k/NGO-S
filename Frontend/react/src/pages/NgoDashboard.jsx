@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUsers, FaHeart, FaChartLine, FaAward } from "react-icons/fa";
+import FetchRequest from "./ViewRequests";
 
 // --- CSS CONSTANT OBJECT ---
 const styles = {
@@ -62,7 +63,7 @@ const styles = {
     boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
   },
   progressBar: {
-    height: "10px",
+    height: "8px",
     background: "#e5e7eb",
     borderRadius: "10px",
     overflow: "hidden",
@@ -218,6 +219,7 @@ const handleDonationSubmit = () => {
 
   return (
     <div style={styles.dashboardWrapper}>
+      
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>NGO Dashboard</h1>
@@ -226,27 +228,22 @@ const handleDonationSubmit = () => {
         <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
       </div>
 
+      
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
-          <p style={styles.subtitle}>Approved Requests</p>
-          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>{reqCount.active}</h2>
-          <button className="btn btn-primary" onClick={() => navigate("/view-requests", { state: { filter: "APPROVED" } })}>Active Requests</button>
+          <p style={styles.subtitle}>Active Campaigns</p>
+          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>{activeRequest}</h2>
+          <button type="button" class="btn btn-primary" onClick={()  =>navigate("/view-requests")}>View Request's</button>
           <FaAward style={{ ...styles.iconBase, color: "#2563eb", background: "#dbeafe" }} />
         </div>
         <div style={styles.statCard}>
-          <p style={styles.subtitle}>Pending Requests</p>
-          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>{reqCount.pending}</h2>
-          <button className="btn btn-warning" onClick={() => navigate("/view-requests", { state: { filter: "PENDING" } })}>New Requests</button>
-          <FaChartLine style={{ ...styles.iconBase, color: "#7c3aed", background: "#ede9fe" }} />
-        </div>
-        <div style={styles.statCard}>
-          <p style={styles.subtitle}>Impact</p>
-          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>{impactCount.impact}</h2>
+          <p style={styles.subtitle}>Total beneficiaries helped</p>
+          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>456</h2>
           <FaUsers style={{ ...styles.iconBase, color: "#16a34a", background: "#dcfce7" }} />
         </div>
         <div style={styles.statCard}>
-          <p style={styles.subtitle}>Total Funds</p>
-          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>{formatCurrency(fundRecd.totalFunds)}</h2>
+          <p style={styles.subtitle}>Funds Received</p>
+          <h2 style={{ fontSize: "28px", margin: "8px 0" }}>₹12.5L</h2>
           <FaHeart style={{ ...styles.iconBase, color: "#dc2626", background: "#fee2e2" }} />
         </div>
         <div style={styles.statCard}>
@@ -256,6 +253,7 @@ const handleDonationSubmit = () => {
         </div>
       </div>
 
+      {/* Middle Section */}
       <div style={styles.middleGrid}>
         <div style={styles.card}>
           <h3 style={{ marginBottom: "10px" }}>Ongoing Requests</h3>
@@ -285,20 +283,17 @@ const handleDonationSubmit = () => {
                     }}></div>
                   </div>
 
-                  <button 
-                    className="btn btn-outline-success btn-sm" 
-                    style={{ marginTop: "12px", width: "100%", fontWeight: "600" }}
-                    onClick={() => openDonateModal(req)}
-                  >
-                    Direct Donate
-                  </button>
-                </div>
-              );
-            })
-          ) : (
-            <p style={styles.subtitle}>No active requests undertaken yet.</p>
-          )}
+          <div style={{ marginTop: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+              <span>Emergency Food Relief</span>
+              <span style={styles.subtitle}>₹2L raised of ₹8L</span>
+            </div>
+            <div style={styles.progressBar}>
+              <div style={{ width: "50%", height: "100%", background: "#ce0b0b" }}></div>
+            </div>
+          </div>
         </div>
+  
 
         <div style={styles.card}>
           <h3 style={{ marginBottom: "10px" }}>Impact Metrics</h3>
@@ -353,7 +348,7 @@ const handleDonationSubmit = () => {
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
