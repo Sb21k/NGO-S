@@ -9,12 +9,12 @@ using System.Text;
 
 namespace NGO_Connect_LoginAndRegister_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly P01NgoConnectContext _context;
-        private readonly IConfiguration _configuration; // Needed to read 'Jwt' settings
+        private readonly IConfiguration _configuration;
 
         public AuthController(P01NgoConnectContext context, IConfiguration configuration)
         {
@@ -22,27 +22,30 @@ namespace NGO_Connect_LoginAndRegister_API.Controllers
             _configuration = configuration;
         }
 
-        // ==========================================
-        // LOGIN: Generate JWT Token
-        // ==========================================
         [HttpPost("login")]
         public async Task<ActionResult> Login(LoginDto request)
         {
-            // 1. Find User by Email & Include their Role
             var user = await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            // 2. Validate Password
             if (user == null || user.Password != request.Password)
             {
                 return BadRequest(new { message = "Invalid Email or Password" });
             }
 
-            // 3. Determine Role Name
+            // --- STATUS CHECK ---
+            if (user.AccountStatus == "Under Verification")
+            {
+                return Unauthorized(new { message = "Your account is currently Under Verification. Please wait for Admin approval." });
+            }
+            if (user.AccountStatus == "Inactive")
+            {
+                return Unauthorized(new { message = "Your account has been deactivated." });
+            }
+
             string roleName = user.Role?.RoleName ?? "Beneficiary";
 
-            // 4. GENERATE JWT TOKEN
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
 
@@ -53,9 +56,9 @@ namespace NGO_Connect_LoginAndRegister_API.Controllers
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Role, roleName),
-                    new Claim("UserId", user.UserId.ToString()) // Useful for frontend calls later
+                    new Claim("UserId", user.UserId.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddHours(2), // Token valid for 2 hours
+                Expires = DateTime.UtcNow.AddHours(2),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -64,45 +67,16 @@ namespace NGO_Connect_LoginAndRegister_API.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            // 5. Return Token & Data
             return Ok(new
             {
                 message = "Login Successful",
-                token = tokenString, // <--- FRONTEND NEEDS THIS
+                token = tokenString,
                 userId = user.UserId,
                 username = user.Username,
                 role = roleName
             });
         }
 
-        // ==========================================
-        // FETCH STATES
-        // ==========================================
-        [HttpGet("states")]
-        public async Task<ActionResult<IEnumerable<StateDto>>> GetStates()
-        {
-            var states = await _context.States
-                .Select(s => new StateDto { StateId = s.StateId, StateName = s.StateName })
-                .ToListAsync();
-            return Ok(states);
-        }
-
-        // ==========================================
-        // FETCH CITIES
-        // ==========================================
-        [HttpGet("cities/{stateId}")]
-        public async Task<ActionResult<IEnumerable<CityDto>>> GetCities(int stateId)
-        {
-            var cities = await _context.Cities
-                .Where(c => c.StateId == stateId)
-                .Select(c => new CityDto { CityId = c.CityId, CityName = c.CityName })
-                .ToListAsync();
-            return Ok(cities);
-        }
-
-        // ==========================================
-        // REGISTER USER
-        // ==========================================
         [HttpPost("register")]
         public async Task<ActionResult> Register(RegisterDto request)
         {
@@ -117,6 +91,9 @@ namespace NGO_Connect_LoginAndRegister_API.Controllers
             var random = new Random();
             int randomRegNo = random.Next(100000000, 999999999);
 
+            // NGO = Under Verification, Others = Active
+            string initialStatus = (request.RoleName == "NGO") ? "Under Verification" : "Active";
+
             var newUser = new User
             {
                 Username = request.Username,
@@ -128,45 +105,29 @@ namespace NGO_Connect_LoginAndRegister_API.Controllers
                 RoleId = role.RoleId,
                 StateId = request.StateId,
                 CityId = request.CityId,
-                RegNo = randomRegNo,
-                AccountStatus = "Active"
+                //RegNo = randomRegNo,
+                AccountStatus = initialStatus
             };
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Registration successful!" });
+            return Ok(new { message = "Registration successful!", status = initialStatus });
         }
 
-        // ==========================================
-        // FORGOT PASSWORD STEP 1: VERIFY EMAIL
-        // ==========================================
+        [HttpGet("states")]
+        public async Task<ActionResult<IEnumerable<StateDto>>> GetStates() { return Ok(await _context.States.Select(s => new StateDto { StateId = s.StateId, StateName = s.StateName }).ToListAsync()); }
+
+        [HttpGet("cities/{stateId}")]
+        public async Task<ActionResult<IEnumerable<CityDto>>> GetCities(int stateId) { return Ok(await _context.Cities.Where(c => c.StateId == stateId).Select(c => new CityDto { CityId = c.CityId, CityName = c.CityName }).ToListAsync()); }
+
         [HttpPost("verify-email")]
-        public async Task<ActionResult> VerifyEmail(VerifyEmailDto request)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null) return NotFound(new { message = "User doesn't exist." });
-            return Ok(new { message = "User verified." });
-        }
+        public async Task<ActionResult> VerifyEmail(VerifyEmailDto request) { var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email); return user == null ? NotFound(new { message = "User doesn't exist." }) : Ok(new { message = "User verified." }); }
 
-        // ==========================================
-        // FORGOT PASSWORD STEP 2: RESET
-        // ==========================================
         [HttpPost("reset-password")]
-        public async Task<ActionResult> ResetPassword(ResetPasswordDto request)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null) return NotFound(new { message = "User not found." });
-
-            user.Password = request.NewPassword;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Password updated successfully." });
-        }
+        public async Task<ActionResult> ResetPassword(ResetPasswordDto request) { var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email); if (user == null) return NotFound(new { message = "User not found." }); user.Password = request.NewPassword; _context.Users.Update(user); await _context.SaveChangesAsync(); return Ok(new { message = "Password updated successfully." }); }
     }
 
-    // --- DTOs ---
     public class LoginDto { public string Email { get; set; } public string Password { get; set; } }
     public class RegisterDto { public string Username { get; set; } public string Email { get; set; } public string PhoneNo { get; set; } public string PanNo { get; set; } public string Password { get; set; } public string Address { get; set; } public int StateId { get; set; } public int CityId { get; set; } public string RoleName { get; set; } }
     public class StateDto { public int StateId { get; set; } public string StateName { get; set; } }

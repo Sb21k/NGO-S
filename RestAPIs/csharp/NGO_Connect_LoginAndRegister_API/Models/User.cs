@@ -27,7 +27,7 @@ public partial class User
 
     public int? CityId { get; set; }
 
-    public int? RegNo { get; set; }
+    //public int? RegNo { get; set; }
 
     public virtual ICollection<BeneficiaryRequest> BeneficiaryRequests { get; set; } = new List<BeneficiaryRequest>();
 
