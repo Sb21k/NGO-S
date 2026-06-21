@@ -1,11 +1,22 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer; // NEW
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens; // NEW
+using Microsoft.IdentityModel.Tokens;
 using NGO_Connect_LoginAndRegister_API.Data;
 using NGO_Connect_LoginAndRegister_API.Models;
-using System.Text; // NEW
+using System.Text;
+using Steeltoe.Discovery.Eureka; // <--- NEW: Eureka Namespace
+using Steeltoe.Discovery.Client; // <--- NEW: Steeltoe Namespace
+using Steeltoe.Discovery;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ==========================================
+// NEW: DISCOVERY SERVICE REGISTRATION
+// ==========================================
+builder.Services.AddDiscoveryClient(builder.Configuration);
+
 
 // ==========================================
 // 1. DATABASE CONNECTION (MySQL)
@@ -15,9 +26,8 @@ builder.Services.AddDbContext<P01NgoConnectContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // ==========================================
-// 2. JWT AUTHENTICATION SETUP (NEW)
+// 2. JWT AUTHENTICATION SETUP
 // ==========================================
-// This tells the app how to validate the token sent by React
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,15 +55,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // 4. CORS (Allow React App)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp",
-        policy => policy.WithOrigins("http://localhost:5173") // Your React URL
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
-});
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactApp",
+//        policy => policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+//                        .AllowAnyHeader()
+//                        .AllowAnyMethod());
+//});
 
 var app = builder.Build();
+
+
+// use discovery client 
+app.UseDiscoveryClient();
 
 // ==========================================
 // 4. PIPELINE CONFIGURATION
@@ -64,13 +78,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection(); // Optional: Good for security
+//app.UseCors("AllowReactApp");
 
-app.UseCors("AllowReactApp");
-
-// IMPORTANT: Order matters here!
-app.UseAuthentication(); // <--- NEW: Checks "Who are you?" (Validates Token)
-app.UseAuthorization();  // Checks "What can you do?" (Roles)
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -35,6 +35,8 @@ public partial class P01NgoConnectContext : DbContext
 
     public DbSet<Story> Stories { get; set; }
 
+    public DbSet<Notification> Notifications { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -205,7 +207,7 @@ public partial class P01NgoConnectContext : DbContext
 
             entity.HasIndex(e => e.PanNo, "pan_no_UNIQUE").IsUnique();
 
-            entity.HasIndex(e => e.RegNo, "reg_no_UNIQUE").IsUnique();
+            //entity.HasIndex(e => e.RegNo, "reg_no_UNIQUE").IsUnique();
 
             entity.HasIndex(e => e.Username, "username").IsUnique();
 
@@ -229,7 +231,7 @@ public partial class P01NgoConnectContext : DbContext
             entity.Property(e => e.PhoneNo)
                 .HasMaxLength(20)
                 .HasColumnName("phone_no");
-            entity.Property(e => e.RegNo).HasColumnName("reg_no");
+           // entity.Property(e => e.RegNo).HasColumnName("reg_no");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.StateId).HasColumnName("state_id");
             entity.Property(e => e.Username)
