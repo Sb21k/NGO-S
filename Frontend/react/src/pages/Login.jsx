@@ -21,28 +21,14 @@ const Login = () => {
       setRememberMe(true);
     }
   }, []);
-  const validateEmail = (emailToValidate)=>{
-    let newErrors = {};
-    let isValid = true;
-    const emailRegexp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if((!emailRegexp.test(emailToValidate))){
-      setError("Please enter correct email format");
-      return false;
-    }
-    return true;
 
-  };
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
-    if(!validateEmail(email)){
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/Auth/login", {
+      const response = await fetch("http://localhost:5096/api/Auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

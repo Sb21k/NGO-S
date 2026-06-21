@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.ngoconnect.entities.BeneficiaryRequest;
 import com.ngoconnect.services.BeneficiaryRequestService;
@@ -52,10 +51,11 @@ public class BeneficiaryRequestController {
         );
     }
 
-    // GET REQUESTS BY BENEFICIARY
-    @GetMapping("/requests/{id}")
-    public List<BeneficiaryRequest> myRequests(@PathVariable int id) {
-        return service.getMyRequests(id);
+    // 2️⃣ Beneficiary views own requests
+    @GetMapping("/requests/{beneficiaryId}")
+    public List<BeneficiaryRequest> getRequestsByBeneficiary(
+            @PathVariable Integer beneficiaryId) {
+        return service.getRequestsByBeneficiary(beneficiaryId);
     }
 
     //update amount, description, proof

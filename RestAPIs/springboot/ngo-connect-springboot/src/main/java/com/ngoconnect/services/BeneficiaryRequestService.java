@@ -172,8 +172,7 @@ public class BeneficiaryRequestService {
             }
         }
 
-        return requestRepo.save(req);
-    }
+    BeneficiaryRequest createRequest(BeneficiaryRequest request);
 
     public void deleteRequest(int id) {
         requestRepo.deleteById(id);

@@ -20,9 +20,8 @@ public class BeneficiaryRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int request_id;
 
-    @ManyToOne
-    @JoinColumn(name = "beneficiary_id")
-    private User beneficiary;
+    @Column(name = "item_id", nullable = false)
+    private Integer itemId;
 
     @ManyToOne
     @JoinColumn(name = "item_id")
@@ -31,7 +30,6 @@ public class BeneficiaryRequest {
     private String proofDocument;
     private BigDecimal amountNeeded;
     private String description;
-    private String requestStatus;
 
     @Column(name = "request_date")
     @JsonFormat(pattern = "yyyy-MM-dd")
