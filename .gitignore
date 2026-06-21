@@ -22,3 +22,11 @@ build/
 .project
 .classpath
 .settings/
+
+**/EBWebView/
+*.log
+.DS_Store
+Thumbs.db
+
+**/uploads/*
+!**/uploads/.gitkeep

@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens; // NEW
 using NGO_Connect_LoginAndRegister_API.Data;
 using NGO_Connect_LoginAndRegister_API.Models;
+using Steeltoe.Discovery.Client;
 using System.Text; // NEW
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddDiscoveryClient(builder.Configuration);
 // ==========================================
 // 1. DATABASE CONNECTION (MySQL)
 // ==========================================
@@ -45,15 +47,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // 4. CORS (Allow React App)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp",
-        policy => policy.WithOrigins("http://localhost:5173") // Your React URL
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
-});
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactApp",
+//        policy => policy.WithOrigins("http://localhost:5173") // Your React URL
+//                        .AllowAnyHeader()
+//                        .AllowAnyMethod());
+//});
 
 var app = builder.Build();
+
+app.UseDiscoveryClient();
 
 // ==========================================
 // 4. PIPELINE CONFIGURATION
@@ -66,7 +70,7 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection(); // Optional: Good for security
 
-app.UseCors("AllowReactApp");
+//app.UseCors("AllowReactApp");
 
 // IMPORTANT: Order matters here!
 app.UseAuthentication(); // <--- NEW: Checks "Who are you?" (Validates Token)

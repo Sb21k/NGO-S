@@ -1,19 +1,24 @@
 package com.ngoconnect.entities;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.sql.Date;
+import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
 @Entity
 @Table(name = "beneficiary_request")
-@Getter @Setter
+@Getter
+@Setter
 public class BeneficiaryRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int requestId;
+    private int request_id;
 
     @ManyToOne
     @JoinColumn(name = "beneficiary_id")
@@ -22,11 +27,17 @@ public class BeneficiaryRequest {
     @ManyToOne
     @JoinColumn(name = "item_id")
     private Item item;
-    private String proofDocument;
 
+    private String proofDocument;
     private BigDecimal amountNeeded;
     private String description;
     private String requestStatus;
 
-    private LocalDateTime requestDate;
+    @Column(name = "request_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate requestDate;
+    
+    @Column(name = "expire_date", nullable = false)
+    private LocalDate expiryDate;
+
 }
